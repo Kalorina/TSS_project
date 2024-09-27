@@ -71,6 +71,7 @@ BEGIN_MESSAGE_MAP(CTSScviko1Dlg, CDialogEx)
 	ON_COMMAND(ID_FILE_OPEN32771, &CTSScviko1Dlg::OnFileOpen32771)
 	ON_COMMAND(ID_FILE_CLOSE32772, &CTSScviko1Dlg::OnFileClose32772)
 	ON_WM_SIZE()
+	ON_WM_DRAWITEM()
 END_MESSAGE_MAP()
 
 
@@ -249,3 +250,45 @@ void CTSScviko1Dlg::OnSize(UINT nType, int cx, int cy)
 	//potrebne
 
 }
+
+// Draw classes for Itmes
+/*
+class CStaticImage : public CStatic
+{
+public:
+	// Overridable (for owner draw only)
+	//lp -> long pointer
+	void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStuct) override;
+};
+
+class CStaticHist : public CStatic
+{
+public:
+	// Overridable (for owner draw only)
+	void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStuct) override;
+};
+
+/*
+
+CHECKPOINT
+Asi az dalsia hodina... 
+
+void CStaticImage::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStuct)
+{
+	GetParent()->SendMessage(CTSScviko1Dlg::WM_DRAW_IMAGE, (WPARAM)lpDrawItemStuct)
+};
+
+void CStaticImage::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStuct)
+{
+	GetParent()->SendMessage(CTSScviko1Dlg::WM_DRAW_HISTOGRAM, (WPARAM)lpDrawItemStuct)
+};
+
+//Message WM_DrawItem via CLass Wizard
+
+void CTSScviko1Dlg::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
+{
+	// TODO: Add your message handler code here and/or call default
+
+	CDialogEx::OnDrawItem(nIDCtl, lpDrawItemStruct);
+}
+*/

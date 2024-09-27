@@ -42,9 +42,13 @@ public:
 
 	CListCtrl m_fileList;
 	CStatic m_staticHistogram;
+
+	CStatic m_hist;
+
 	CStatic m_staticImage;
 
 	afx_msg void OnFileOpen32771();
 	afx_msg void OnFileClose32772();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
+	//afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct);
 };
