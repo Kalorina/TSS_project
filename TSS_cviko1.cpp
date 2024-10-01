@@ -6,6 +6,9 @@
 #include "framework.h"
 #include "TSS_cviko1.h"
 #include "TSS_cviko1Dlg.h"
+#include <gdiplus.h>
+#include <stdio.h>
+using namespace Gdiplus;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -70,6 +73,10 @@ BOOL CTSScviko1App::InitInstance()
 	// TODO: You should modify this string to be something appropriate
 	// such as the name of your company or organization
 	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
+
+	GdiplusStartupInput gdiplusStartupInput;
+	ULONG_PTR gdiplusToken;
+	GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
 	CTSScviko1Dlg dlg;
 	m_pMainWnd = &dlg;

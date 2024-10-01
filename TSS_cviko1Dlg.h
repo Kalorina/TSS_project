@@ -4,6 +4,32 @@
 
 #pragma once
 
+// Class File pre obrazky
+// 
+// 
+// Draw classes for Itmes
+// enum -> enumarate
+enum
+{
+	WM_DRAW_IMAGE = WM_USER + 1,
+	WM_DRAW_HISTOGRAM //s deklaraciou -> WM_DRAW_HISTOGRAM = WM_USER + 2;
+};
+
+class CStaticImage : public CStatic
+{
+public:
+	// Overridable (for owner draw only)
+	//lp -> long pointer
+	void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStuct) override;
+};
+
+class CStaticHist : public CStatic
+{
+public:
+	// Overridable (for owner draw only)
+	//lp -> long pointer
+	void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStuct) override;
+};
 
 // CTSScviko1Dlg dialog
 class CTSScviko1Dlg : public CDialogEx
@@ -41,14 +67,16 @@ public:
 	CRect m_rectStaticImage;
 
 	CListCtrl m_fileList;
-	CStatic m_staticHistogram;
+	CStaticHist m_staticHistogram;
 
-	CStatic m_hist;
-
-	CStatic m_staticImage;
+	//CStaticHist m_staticHist;
+	CStaticImage m_staticImage;
 
 	afx_msg void OnFileOpen32771();
 	afx_msg void OnFileClose32772();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
-	//afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct);
+	
+	//Messages
+	afx_msg LRESULT OnDrawImage(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnDrawHist(WPARAM wParam, LPARAM lParam);
 };

@@ -13,6 +13,17 @@
 #endif
 
 
+void CStaticImage::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStuct)
+{
+	GetParent()->SendMessage(WM_DRAW_IMAGE, (WPARAM)lpDrawItemStuct);
+};
+
+void CStaticHist::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStuct)
+{
+	GetParent()->SendMessage(WM_DRAW_HISTOGRAM, (WPARAM)lpDrawItemStuct);
+};
+
+
 // CAboutDlg dialog used for App About
 
 class CAboutDlg : public CDialogEx
@@ -70,9 +81,14 @@ BEGIN_MESSAGE_MAP(CTSScviko1Dlg, CDialogEx)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_FILE_LIST, &CTSScviko1Dlg::OnLvnItemchangedFileList)
 	ON_COMMAND(ID_FILE_OPEN32771, &CTSScviko1Dlg::OnFileOpen32771)
 	ON_COMMAND(ID_FILE_CLOSE32772, &CTSScviko1Dlg::OnFileClose32772)
+	//Messages
+	ON_MESSAGE(WM_DRAW_IMAGE, OnDrawImage)
+	ON_MESSAGE(WM_DRAW_HISTOGRAM, OnDrawHist)
+
 	ON_WM_SIZE()
 	ON_WM_DRAWITEM()
 END_MESSAGE_MAP()
+
 
 
 // CTSScviko1Dlg message handlers
@@ -107,11 +123,12 @@ BOOL CTSScviko1Dlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
-	// chcem vediet velkost hlavnej aplikacie
+
 	GetClientRect(&m_rect);
 	m_fileList.GetWindowRect(&m_rectFileList);
 	m_staticImage.GetWindowRect(&m_rectStaticImage);
 	m_staticHistogram.GetWindowRect(&m_rectStaticHistogram);
+	GetWindowRect(&m_rect);
 
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
@@ -251,44 +268,29 @@ void CTSScviko1Dlg::OnSize(UINT nType, int cx, int cy)
 
 }
 
-// Draw classes for Itmes
-/*
-class CStaticImage : public CStatic
+LRESULT CTSScviko1Dlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 {
-public:
-	// Overridable (for owner draw only)
-	//lp -> long pointer
-	void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStuct) override;
-};
+	LPDRAWITEMSTRUCT st = (LPDRAWITEMSTRUCT)wParam;
 
-class CStaticHist : public CStatic
-{
-public:
-	// Overridable (for owner draw only)
-	void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStuct) override;
-};
+	// Nizsie urovnovy
+	// CDC* pDC = CDC::FromHandle(st->hDC);
 
-/*
+	//Vyssie urovnovy
+	auto gr = Gdiplus::Graphics::FromHDC(st->hDC);
 
-CHECKPOINT
-Asi az dalsia hodina... 
+	//gr->DrawImage();
 
-void CStaticImage::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStuct)
-{
-	GetParent()->SendMessage(CTSScviko1Dlg::WM_DRAW_IMAGE, (WPARAM)lpDrawItemStuct)
-};
-
-void CStaticImage::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStuct)
-{
-	GetParent()->SendMessage(CTSScviko1Dlg::WM_DRAW_HISTOGRAM, (WPARAM)lpDrawItemStuct)
-};
-
-//Message WM_DrawItem via CLass Wizard
-
-void CTSScviko1Dlg::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
-{
-	// TODO: Add your message handler code here and/or call default
-
-	CDialogEx::OnDrawItem(nIDCtl, lpDrawItemStruct);
+	return S_OK;
 }
-*/
+
+LRESULT CTSScviko1Dlg::OnDrawHist(WPARAM wParam, LPARAM lParam)
+{
+	LPDRAWITEMSTRUCT st = (LPDRAWITEMSTRUCT)wParam;
+
+	//Vyssie urovnovy
+	auto gr = Gdiplus::Graphics::FromHDC(st->hDC);
+
+	//gr->DrawCurve();
+
+	return S_OK;
+}
