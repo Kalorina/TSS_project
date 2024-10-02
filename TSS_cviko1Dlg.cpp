@@ -192,10 +192,24 @@ void CTSScviko1Dlg::OnLvnItemchangedFileList(NMHDR* pNMHDR, LRESULT* pResult)
 	*pResult = 0;
 }
 
+//TUTO File directories
+
 
 void CTSScviko1Dlg::OnFileOpen32771()
 {
 	// TODO: Add your command handler code here
+
+	CString	filename;
+	CString filepath;
+	TCHAR fileTypeFilters[] = _T("Files(*.bmp, *.png, *.jpg, *.jpeg)");
+	CFileDialog dlg(TRUE, _T(""), _T("*.*"), OFN_FILEMUSTEXIST, fileTypeFilters);
+	if (dlg.DoModal() == IDOK)
+	{
+		filename = dlg.GetFileName();
+		filepath = dlg.GetPathName();
+	}
+	else
+		return;
 }
 
 
