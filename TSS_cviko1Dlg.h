@@ -68,8 +68,6 @@ public:
 
 	CListCtrl m_fileList;
 	CStaticHist m_staticHistogram;
-
-	//CStaticHist m_staticHist;
 	CStaticImage m_staticImage;
 
 	afx_msg void OnFileOpen32771();

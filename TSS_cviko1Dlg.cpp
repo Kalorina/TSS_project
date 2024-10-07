@@ -201,7 +201,7 @@ void CTSScviko1Dlg::OnFileOpen32771()
 
 	CString	filename;
 	CString filepath;
-	TCHAR fileTypeFilters[] = _T("Files(*.bmp, *.png, *.jpg, *.jpeg)");
+	TCHAR fileTypeFilters[] = _T("Files(*.bmp; *.png; *.jpg; *.jpeg)");
 	CFileDialog dlg(TRUE, _T(""), _T("*.*"), OFN_FILEMUSTEXIST, fileTypeFilters);
 	if (dlg.DoModal() == IDOK)
 	{
@@ -266,15 +266,16 @@ void CTSScviko1Dlg::OnSize(UINT nType, int cx, int cy)
 
 	int nDiffY = cy - m_rect.Height();
 	int nDiffX = cx - m_rect.Width();
-	int histTop = cy - m_rectStaticHistogram.Height() - 10;
 
 	if (::IsWindow(m_fileList) && ::IsWindow(m_staticImage) && ::IsWindow(m_staticHistogram)) {
 
 		m_fileList.SetWindowPos(nullptr, 0, 0, m_rectFileList.Width(), m_rectFileList.Height() + nDiffY, SWP_NOMOVE);
 
 		m_staticImage.SetWindowPos(nullptr, 0, 0, m_rectStaticImage.Width() + nDiffX, m_rectStaticImage.Height() + nDiffY, SWP_NOMOVE);
-		
-		m_staticHistogram.SetWindowPos(nullptr, m_rectStaticHistogram.left - 9, histTop, m_rectStaticHistogram.Width(), m_rectStaticHistogram.Height(), SWP_NOZORDER);
+
+		int histY = cy - m_rectStaticHistogram.Height() - m_rectFileList.Height() - 18;
+
+		m_staticHistogram.SetWindowPos(nullptr, m_rectStaticHistogram.left - 9, histY,  m_rectStaticHistogram.Width(), m_rectStaticHistogram.Height(), SWP_NOZORDER);
 	}
 
 	Invalidate(TRUE);
