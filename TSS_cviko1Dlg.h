@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <vector> 
+#include <iostream>
 using namespace std;
 
 #pragma once
@@ -78,7 +79,6 @@ public:
 	CStaticImage m_staticImage;
 
 	std::vector<Img> m_imageList;
-
 
 	afx_msg void OnFileOpen32771();
 	afx_msg void OnFileClose32772();

@@ -11,6 +11,7 @@
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
+#include <iostream>
 
 
 void CStaticImage::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStuct)
@@ -214,27 +215,31 @@ void CTSScviko1Dlg::OnFileOpen32771()
 			// Get just the file name from the full path
 			CString filename = filepath.Mid(filepath.ReverseFind('\\') + 1);
 
+			bool imageExists = false; // Flag to check if the image already exists
+
 			for (const auto& img : m_imageList)
 			{
 				if (img.filepath == filepath && img.filename == filename)
 				{
+					imageExists = true; 
 					CString message;
 					message.Format(_T("The file \"%s\" is already opened."), filepath);
 					AfxMessageBox(message);
-					return;
+					break; 
 				}
 			}
 
-			Img image;
-			image.filename = filename;
-			image.filepath = filepath;
-
-			m_imageList.push_back(image);
-
-			// Get the current number of items in the list
-			int itemCount = m_fileList.GetItemCount();  
-
-			int nIndex = m_fileList.InsertItem(itemCount, filename);
+			if (!imageExists)
+			{
+				Img image; 
+				image.filename = filename;
+				image.filepath = filepath;
+				m_imageList.push_back(image);
+				// Get the current number of items in the list
+				int itemCount = m_fileList.GetItemCount();
+				m_fileList.InsertItem(itemCount, filename);
+				int itemCount2 = m_fileList.GetItemCount();
+			}
 
 		}
 	}
@@ -250,8 +255,6 @@ void CTSScviko1Dlg::OnFileClose32772()
 	// Check if any item is selected
 	if (pos != NULL)
 	{
-
-		// Get the index of the selected item
 		int selectedIndex = m_fileList.GetNextSelectedItem(pos);
 
 		CString selectedFile = m_fileList.GetItemText(selectedIndex, 0);
@@ -263,8 +266,30 @@ void CTSScviko1Dlg::OnFileClose32772()
 		// If the user clicked 'Yes', proceed to close the file
 		if (response == IDYES)
 		{
-			// Remove the selected item from the list control (the image is effectively "closed")
+			CString filepathToDelete = m_fileList.GetItemText(selectedIndex, 0);
+
+			bool imageFound = false;
+			int s = m_imageList.size();
+
+			// Loop through the vector to find and remove the image
+			auto it = std::remove_if(m_imageList.begin(), m_imageList.end(),
+				[&filepathToDelete](const Img& img) {
+					return img.filepath.CompareNoCase(filepathToDelete) == 0;
+				});
+
+			if (it != m_imageList.end()) {
+				m_imageList.erase(it, m_imageList.end()); // Erase the elements removed by remove_if
+				imageFound = true; // Set flag indicating the image was found
+			}
+
+			s = m_imageList.size();
 			m_fileList.DeleteItem(selectedIndex);
+
+			// Optional: Inform the user if the image was successfully closed
+			if (imageFound)
+			{
+				AfxMessageBox(_T("The file has been successfully closed."));
+			}
 		}
 	}
 	else
