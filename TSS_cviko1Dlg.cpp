@@ -266,26 +266,27 @@ void CTSScviko1Dlg::OnFileClose32772()
 		// If the user clicked 'Yes', proceed to close the file
 		if (response == IDYES)
 		{
-			CString filepathToDelete = m_fileList.GetItemText(selectedIndex, 0);
+			CString filenameToDelete = m_fileList.GetItemText(selectedIndex, 0);
 
 			bool imageFound = false;
-			int s = m_imageList.size();
 
 			// Loop through the vector to find and remove the image
 			auto it = std::remove_if(m_imageList.begin(), m_imageList.end(),
-				[&filepathToDelete](const Img& img) {
-					return img.filepath.CompareNoCase(filepathToDelete) == 0;
+				[&filenameToDelete](const Img& img) {
+					return img.filename.CompareNoCase(filenameToDelete) == 0;
 				});
 
-			if (it != m_imageList.end()) {
-				m_imageList.erase(it, m_imageList.end()); // Erase the elements removed by remove_if
-				imageFound = true; // Set flag indicating the image was found
+			for (size_t i = 0; i < m_imageList.size(); ++i)
+			{
+				if (m_imageList[i].filename.CompareNoCase(filenameToDelete) == 0)
+				{
+					m_imageList.erase(m_imageList.begin() + i);
+					break; // Exit the loop once the item is found and deleted
+				}
 			}
 
-			s = m_imageList.size();
 			m_fileList.DeleteItem(selectedIndex);
 
-			// Optional: Inform the user if the image was successfully closed
 			if (imageFound)
 			{
 				AfxMessageBox(_T("The file has been successfully closed."));
@@ -294,7 +295,7 @@ void CTSScviko1Dlg::OnFileClose32772()
 	}
 	else
 	{
-		// No item is selected, inform the user or do nothing
+		// No item is selected, inform the user and do nothing
 		AfxMessageBox(_T("No image selected to close."));
 	}
 }
