@@ -192,7 +192,19 @@ void CTSScviko1Dlg::OnLvnItemchangedFileList(NMHDR* pNMHDR, LRESULT* pResult)
 	*pResult = 0;
 }
 
-//TUTO File directories
+bool CTSScviko1Dlg::IsFileInList(const CString& path, const CString& name)
+{
+	// Iterate through the vector to check for the file
+	for (const auto& img : m_imageList)
+	{
+		if (img.filepath == path && img.filename == name)
+		{
+			return true;
+		}
+	}
+	return false;  // File not found in the list
+}
+
 
 
 void CTSScviko1Dlg::OnFileOpen32771()
@@ -201,12 +213,44 @@ void CTSScviko1Dlg::OnFileOpen32771()
 
 	CString	filename;
 	CString filepath;
-	TCHAR fileTypeFilters[] = _T("Files(*.bmp; *.png; *.jpg; *.jpeg)");
-	CFileDialog dlg(TRUE, _T(""), _T("*.*"), OFN_FILEMUSTEXIST, fileTypeFilters);
+
+	TCHAR fileTypeFilters[] = _T("Files (*.bmp;*.png;*.jpg)|*.bmp;*.png;*.jpg||");
+
+	CFileDialog dlg(TRUE, _T(""), _T(""), OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT, fileTypeFilters);
+
 	if (dlg.DoModal() == IDOK)
 	{
-		filename = dlg.GetFileName();
-		filepath = dlg.GetPathName();
+		POSITION pos = dlg.GetStartPosition();
+
+		while (pos != NULL)
+		{
+			CString filepath = dlg.GetNextPathName(pos);
+			// Get just the file name from the full path
+			CString filename = filepath.Mid(filepath.ReverseFind('\\') + 1);
+
+			for (const auto& img : m_imageList)
+			{
+				if (img.filepath == filepath && img.filename == filename)
+				{
+					CString message;
+					message.Format(_T("The file \"%s\" is already opened."), filepath);
+					AfxMessageBox(message);
+					return;
+				}
+			}
+
+			Img image;
+			image.filename = filename;
+			image.filepath = filepath;
+
+			m_imageList.push_back(image);
+
+			// Get the current number of items in the list
+			int itemCount = m_fileList.GetItemCount();  
+
+			int nIndex = m_fileList.InsertItem(itemCount, filename);
+
+		}
 	}
 	else
 		return;
@@ -215,7 +259,33 @@ void CTSScviko1Dlg::OnFileOpen32771()
 
 void CTSScviko1Dlg::OnFileClose32772()
 {
-	// TODO: Add your command handler code here
+	POSITION pos = m_fileList.GetFirstSelectedItemPosition();
+
+	// Check if any item is selected
+	if (pos != NULL)
+	{
+
+		// Get the index of the selected item
+		int selectedIndex = m_fileList.GetNextSelectedItem(pos);
+
+		CString selectedFile = m_fileList.GetItemText(selectedIndex, 0);
+
+		CString message;
+		message.Format(_T("Are you sure you want to close the file: %s?"), selectedFile);
+		int response = AfxMessageBox(message, MB_YESNO | MB_ICONQUESTION);
+
+		// If the user clicked 'Yes', proceed to close the file
+		if (response == IDYES)
+		{
+			// Remove the selected item from the list control (the image is effectively "closed")
+			m_fileList.DeleteItem(selectedIndex);
+		}
+	}
+	else
+	{
+		// No item is selected, inform the user or do nothing
+		AfxMessageBox(_T("No image selected to close."));
+	}
 }
 
 //a bit longer code, but same outcome

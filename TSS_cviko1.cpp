@@ -7,7 +7,6 @@
 #include "TSS_cviko1.h"
 #include "TSS_cviko1Dlg.h"
 #include <gdiplus.h>
-#include <stdio.h>
 using namespace Gdiplus;
 
 #ifdef _DEBUG

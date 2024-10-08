@@ -2,11 +2,18 @@
 // TSS_cviko1Dlg.h : header file
 //
 
+#include <stdio.h>
+#include <vector> 
+using namespace std;
+
 #pragma once
 
-// Class File pre obrazky
-// 
-// 
+struct Img 
+{
+	CString filename;
+	CString filepath;
+};
+
 // Draw classes for Itmes
 // enum -> enumarate
 enum
@@ -69,6 +76,10 @@ public:
 	CListCtrl m_fileList;
 	CStaticHist m_staticHistogram;
 	CStaticImage m_staticImage;
+
+	std::vector<Img> m_imageList;
+
+	bool IsFileInList(const CString& filepath, const CString& name);
 
 	afx_msg void OnFileOpen32771();
 	afx_msg void OnFileClose32772();
