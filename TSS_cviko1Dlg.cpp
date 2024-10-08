@@ -192,20 +192,6 @@ void CTSScviko1Dlg::OnLvnItemchangedFileList(NMHDR* pNMHDR, LRESULT* pResult)
 	*pResult = 0;
 }
 
-bool CTSScviko1Dlg::IsFileInList(const CString& path, const CString& name)
-{
-	// Iterate through the vector to check for the file
-	for (const auto& img : m_imageList)
-	{
-		if (img.filepath == path && img.filename == name)
-		{
-			return true;
-		}
-	}
-	return false;  // File not found in the list
-}
-
-
 
 void CTSScviko1Dlg::OnFileOpen32771()
 {

@@ -79,7 +79,6 @@ public:
 
 	std::vector<Img> m_imageList;
 
-	bool IsFileInList(const CString& filepath, const CString& name);
 
 	afx_msg void OnFileOpen32771();
 	afx_msg void OnFileClose32772();
