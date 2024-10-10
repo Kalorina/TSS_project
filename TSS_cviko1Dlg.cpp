@@ -7,11 +7,11 @@
 #include "TSS_cviko1.h"
 #include "TSS_cviko1Dlg.h"
 #include "afxdialogex.h"
+#include <stdio.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-#include <iostream>
 
 
 void CStaticImage::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStuct)
@@ -64,7 +64,7 @@ END_MESSAGE_MAP()
 CTSScviko1Dlg::CTSScviko1Dlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_TSS_CVIKO1_DIALOG, pParent)
 {
-	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME); 
 }
 
 void CTSScviko1Dlg::DoDataExchange(CDataExchange* pDX)
@@ -88,6 +88,10 @@ BEGIN_MESSAGE_MAP(CTSScviko1Dlg, CDialogEx)
 
 	ON_WM_SIZE()
 	ON_WM_DRAWITEM()
+
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_FILE_LIST, &CTSScviko1Dlg::OnLvnItemchangedFileList) // Linking the LVN_ITEMCHANGED event
+	//ON_BN_CLICKED(IDC_BUTTON_LOAD_IMAGE, &CTSScviko1Dlg::OnBnClickedLoadImage) // Linking a button click event
+
 END_MESSAGE_MAP()
 
 
@@ -130,7 +134,6 @@ BOOL CTSScviko1Dlg::OnInitDialog()
 	m_staticImage.GetWindowRect(&m_rectStaticImage);
 	m_staticHistogram.GetWindowRect(&m_rectStaticHistogram);
 	GetWindowRect(&m_rect);
-
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -185,11 +188,31 @@ HCURSOR CTSScviko1Dlg::OnQueryDragIcon()
 }
 
 
-
 void CTSScviko1Dlg::OnLvnItemchangedFileList(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
-	// TODO: Add your control notification handler code here
+
+	if (pNMLV->iItem != -1 && (pNMLV->uChanged & LVIF_STATE))
+	{
+		if ((pNMLV->uNewState & LVIS_SELECTED) == LVIS_SELECTED)
+		{
+			int selectedIndex = pNMLV->iItem;
+
+			// Ensure the index is valid and within range of m_imageList
+			if (selectedIndex >= 0 && selectedIndex < m_imageList.size())
+			{
+				if (m_imageList.size() > 0)
+				{
+					// Retrieve the corresponding Img structure
+					const Img& selectedImage = m_imageList[selectedIndex];
+
+					// Send message to draw the image
+					SendMessage(WM_DRAW_IMAGE, (WPARAM)&selectedImage.filepath, 0);
+				}
+			}
+		}
+	}
+
 	*pResult = 0;
 }
 
@@ -369,15 +392,73 @@ LRESULT CTSScviko1Dlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 {
 	LPDRAWITEMSTRUCT st = (LPDRAWITEMSTRUCT)wParam;
 
-	// Nizsie urovnovy
-	// CDC* pDC = CDC::FromHandle(st->hDC);
+	if (m_imageList.size() > 0)
+	{
 
-	//Vyssie urovnovy
-	auto gr = Gdiplus::Graphics::FromHDC(st->hDC);
+		if (wParam == NULL)
+		{
+			return -1;
+		}
 
-	//gr->DrawImage();
+		// Retrieve the Img structure from the WPARAM
+		Img* pImage = reinterpret_cast<Img*>(wParam);
+		if (pImage == nullptr)
+		{
+			return -1;  // Invalid image pointer
+		}
 
+		// Check if the file exists
+		if (!PathFileExists(pImage->filepath))
+		{
+			AfxMessageBox(_T("The specified file does not exist."));
+			return -1;  // File does not exist
+		}
+
+		// Get the CStatic control by its ID (e.g., IDC_STATIC_IMAGE)
+		CStatic* pImageCtrl = (CStatic*)GetDlgItem(IDC_STATIC_IMAGE);
+		if (!pImageCtrl)
+			return -1;  // Control not found
+
+		// Get the device context (DC) for the CStatic control
+		CDC* pDC = pImageCtrl->GetDC();
+		if (!pDC)
+			return -1;  // Failed to get DC
+
+		// Get the handle to the DC (HDC)
+		HDC hDC = pDC->GetSafeHdc();
+
+		// Create a GDI+ Graphics object from the HDC
+		// Nizsie urovnovy
+		// CDC* pDC = CDC::FromHandle(st->hDC);
+
+		//Vyssie urovnovy
+		auto gr = Gdiplus::Graphics::FromHDC(st->hDC);
+
+		// Load the image from the file path using the Img structure
+		Gdiplus::Image image(pImage->filepath); // Use filepath from the Img structure
+
+		// Check if the image loaded successfully
+		if (image.GetLastStatus() != Gdiplus::Ok)
+		{
+			AfxMessageBox(_T("Failed to load the image."));
+			return -1;  // Loading image failed
+		}
+
+		// Get the dimensions of the static control to scale the image if necessary
+		CRect rect;
+		pImageCtrl->GetClientRect(&rect);
+
+		// Draw the image into the static control (scale it to fit)
+		gr->DrawImage(&image, 0, 0, rect.Width(), rect.Height());
+
+		// Clean up
+		delete gr;  // Free the GDI+ Graphics object
+		pImageCtrl->ReleaseDC(pDC);  // Release the DC
+
+	}
 	return S_OK;
+	
+
 }
 
 LRESULT CTSScviko1Dlg::OnDrawHist(WPARAM wParam, LPARAM lParam)
