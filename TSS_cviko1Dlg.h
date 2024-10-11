@@ -78,6 +78,7 @@ public:
 	CStaticImage m_staticImage;
 
 	std::vector<Img> m_imageList;
+	Img* m_currentImage;
 
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 	ULONG_PTR gdiplusToken;
@@ -88,5 +89,7 @@ public:
 	
 	//Messages
 	afx_msg LRESULT OnDrawImage(WPARAM wParam, LPARAM lParam);
+	BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg LRESULT OnDrawHist(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnStnClickedStaticImage();
 };

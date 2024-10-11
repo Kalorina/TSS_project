@@ -92,6 +92,7 @@ BEGIN_MESSAGE_MAP(CTSScviko1Dlg, CDialogEx)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_FILE_LIST, &CTSScviko1Dlg::OnLvnItemchangedFileList) // Linking the LVN_ITEMCHANGED event
 	//ON_BN_CLICKED(IDC_BUTTON_LOAD_IMAGE, &CTSScviko1Dlg::OnBnClickedLoadImage) // Linking a button click event
 
+	ON_STN_CLICKED(IDC_STATIC_IMAGE, &CTSScviko1Dlg::OnStnClickedStaticImage)
 END_MESSAGE_MAP()
 
 
@@ -187,10 +188,11 @@ HCURSOR CTSScviko1Dlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-
+// handler function
 void CTSScviko1Dlg::OnLvnItemchangedFileList(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+
 
 	if (pNMLV->iItem != -1 && (pNMLV->uChanged & LVIF_STATE))
 	{
@@ -198,15 +200,16 @@ void CTSScviko1Dlg::OnLvnItemchangedFileList(NMHDR* pNMHDR, LRESULT* pResult)
 		{
 			int selectedIndex = pNMLV->iItem;
 
-			// Ensure the index is valid and within range of m_imageList
 			if (selectedIndex >= 0 && selectedIndex < m_imageList.size())
 			{
-				// Retrieve the corresponding Img structure
-				const Img& selectedImage = m_imageList[selectedIndex];
+				m_currentImage = &m_imageList[selectedIndex];
 
-				// Send the pointer to the entire Img structure
-				SendMessage(WM_DRAW_IMAGE, reinterpret_cast<WPARAM>(&selectedImage), 0);
+				SendMessage(WM_DRAW_IMAGE, 0, 0);  
 			}
+		}
+		else if ((pNMLV->uNewState & LVIS_SELECTED) == 0) 
+		{
+			SendMessage(WM_DRAW_IMAGE, 0, 0);
 		}
 	}
 
@@ -320,44 +323,6 @@ void CTSScviko1Dlg::OnFileClose32772()
 	}
 }
 
-//a bit longer code, but same outcome
-
-/*
-void CTSScviko1Dlg::OnSize(UINT nType, int cx, int cy)
-{
-	CDialogEx::OnSize(nType, cx, cy);
-
-	// TODO: Add your message handler code here
-
-	if (::IsWindow(m_staticImage.m_hWnd) && ::IsWindow(m_staticHistogram.m_hWnd) && ::IsWindow(m_fileList.m_hWnd))
-	{
-		CRect rectHistogram;
-		m_staticHistogram.GetWindowRect(&rectHistogram);
-		ScreenToClient(&rectHistogram);
-
-		int histogramTop = cy - rectHistogram.Height() - 10;
-		m_staticHistogram.SetWindowPos(NULL, rectHistogram.left, histogramTop, rectHistogram.Width(), rectHistogram.Height(), SWP_NOZORDER);
-
-		CRect rectFileList;
-		m_fileList.GetWindowRect(&rectFileList);
-		ScreenToClient(&rectFileList);
-
-		int newFileListHeight = histogramTop - rectFileList.top - 10;
-		m_fileList.SetWindowPos(NULL, rectFileList.left, rectFileList.top, rectFileList.Width(), newFileListHeight, SWP_NOZORDER);
-
-		CRect rectImage;
-		m_staticImage.GetWindowRect(&rectImage);
-		ScreenToClient(&rectImage);
-
-		int newImageWidth = cx - rectFileList.Width() - 35;
-		int newImageHeight = newFileListHeight + rectHistogram.Height() + 10;
-
-		m_staticImage.SetWindowPos(NULL, rectFileList.right + 10, rectImage.top, newImageWidth, newImageHeight, SWP_NOZORDER);
-	}
-
-	Invalidate(TRUE);
-}
-*/
 
 void CTSScviko1Dlg::OnSize(UINT nType, int cx, int cy)
 {
@@ -385,60 +350,75 @@ void CTSScviko1Dlg::OnSize(UINT nType, int cx, int cy)
 
 }
 
+
 LRESULT CTSScviko1Dlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 {
-	LPDRAWITEMSTRUCT st = (LPDRAWITEMSTRUCT)wParam;
+	if (m_imageList.empty())
+		return -1;
 
-	if (m_imageList.size() > 0)
+	if (m_currentImage == nullptr || m_currentImage->filepath.IsEmpty())
+		return -1; 
+
+	if (!PathFileExists(m_currentImage->filepath))
 	{
-		// Retrieve the Img structure from the WPARAM
-		Img* pImage = reinterpret_cast<Img*>(wParam);
-		if (pImage == nullptr)
-		{
-			return -1;  // Invalid image pointer
-		}
-
-		if (!PathFileExists(pImage->filepath))
-		{
-			AfxMessageBox(_T("The specified file does not exist.") + pImage->filename);
-			return -1; 
-		}
-
-		// Get the CStatic control by its ID (e.g., IDC_STATIC_IMAGE)
-		CStatic* pImageCtrl = (CStatic*)GetDlgItem(IDC_STATIC_IMAGE);
-		if (!pImageCtrl)
-			return -1;  // Control not found
-
-		// Get the device context (DC) for the CStatic control
-		CDC* pDC = pImageCtrl->GetDC();
-		if (!pDC)
-			return -1;
-
-		Gdiplus::Graphics gr(pDC->GetSafeHdc());
-
-		// Load the image from the file path using the Img structure
-		Gdiplus::Image image(pImage->filepath); 
-
-
-		if (image.GetLastStatus() != Gdiplus::Ok)
-		{
-			pImageCtrl->ReleaseDC(pDC);
-			AfxMessageBox(_T("Failed to load the image."));
-			return -1;
-		}
-
-		CRect rect;
-		pImageCtrl->GetClientRect(&rect);
-
-		//(scale it to fit)!
-		gr.DrawImage(&image, 0, 0, rect.Width(), rect.Height());
-
-		pImageCtrl->ReleaseDC(pDC);
+		AfxMessageBox(_T("The specified file does not exist: ") + m_currentImage->filename);
+		return -1;  
 	}
 
-	return S_OK;
+	// Get the CStatic control by its ID (e.g., IDC_STATIC_IMAGE)
+	CStatic* pImageCtrl = (CStatic*)GetDlgItem(IDC_STATIC_IMAGE);
+	if (!pImageCtrl)
+		return -1;  
 
+	CDC* pDC = pImageCtrl->GetDC();
+	if (!pDC)
+		return -1; 
+
+	Gdiplus::Graphics gr(pDC->GetSafeHdc());
+
+
+	Gdiplus::Image image(m_currentImage->filepath);
+
+	if (image.GetLastStatus() != Gdiplus::Ok)
+	{
+		pImageCtrl->ReleaseDC(pDC);
+		AfxMessageBox(_T("Failed to load the image.") + m_currentImage->filename);
+		return -1;
+	}
+
+	CRect rect;
+	pImageCtrl->GetClientRect(&rect);
+
+	Gdiplus::SolidBrush whiteBrush(Gdiplus::Color(255, 255, 255)); 
+	gr.FillRectangle(&whiteBrush, 0, 0, rect.Width(), rect.Height());
+
+	float imageAspectRatio = static_cast<float>(image.GetWidth()) / static_cast<float>(image.GetHeight());
+	float controlAspectRatio = static_cast<float>(rect.Width()) / static_cast<float>(rect.Height());
+
+	float scaleFactor;
+	if (imageAspectRatio > controlAspectRatio)
+	{
+		scaleFactor = static_cast<float>(rect.Width()) / image.GetWidth();
+	}
+	else
+	{
+		scaleFactor = static_cast<float>(rect.Height()) / image.GetHeight();
+	}
+
+	int scaledWidth = static_cast<int>(image.GetWidth() * scaleFactor);
+	int scaledHeight = static_cast<int>(image.GetHeight() * scaleFactor);
+
+	int xPos = (rect.Width() - scaledWidth) / 2;   // Center horizontally
+	int yPos = (rect.Height() - scaledHeight) / 2; // Center vertically
+
+	gr.DrawImage(&image, xPos, yPos, scaledWidth, scaledHeight);
+
+
+	pImageCtrl->ReleaseDC(pDC);
+
+	return S_OK;
 }
+
 
 LRESULT CTSScviko1Dlg::OnDrawHist(WPARAM wParam, LPARAM lParam)
 {
@@ -450,4 +430,9 @@ LRESULT CTSScviko1Dlg::OnDrawHist(WPARAM wParam, LPARAM lParam)
 	//gr->DrawCurve();
 
 	return S_OK;
+}
+
+void CTSScviko1Dlg::OnStnClickedStaticImage()
+{
+	// TODO: Add your control notification handler code here
 }
