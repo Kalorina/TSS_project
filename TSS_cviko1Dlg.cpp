@@ -201,14 +201,11 @@ void CTSScviko1Dlg::OnLvnItemchangedFileList(NMHDR* pNMHDR, LRESULT* pResult)
 			// Ensure the index is valid and within range of m_imageList
 			if (selectedIndex >= 0 && selectedIndex < m_imageList.size())
 			{
-				if (m_imageList.size() > 0)
-				{
-					// Retrieve the corresponding Img structure
-					const Img& selectedImage = m_imageList[selectedIndex];
+				// Retrieve the corresponding Img structure
+				const Img& selectedImage = m_imageList[selectedIndex];
 
-					// Send message to draw the image
-					SendMessage(WM_DRAW_IMAGE, (WPARAM)&selectedImage.filepath, 0);
-				}
+				// Send the pointer to the entire Img structure
+				SendMessage(WM_DRAW_IMAGE, reinterpret_cast<WPARAM>(&selectedImage), 0);
 			}
 		}
 	}
@@ -246,7 +243,7 @@ void CTSScviko1Dlg::OnFileOpen32771()
 				{
 					imageExists = true; 
 					CString message;
-					message.Format(_T("The file \"%s\" is already opened."), filepath);
+					message.Format(_T("The file \"%s\" is already opened."), filename);
 					AfxMessageBox(message);
 					break; 
 				}
@@ -394,12 +391,6 @@ LRESULT CTSScviko1Dlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 
 	if (m_imageList.size() > 0)
 	{
-
-		if (wParam == NULL)
-		{
-			return -1;
-		}
-
 		// Retrieve the Img structure from the WPARAM
 		Img* pImage = reinterpret_cast<Img*>(wParam);
 		if (pImage == nullptr)
@@ -407,11 +398,10 @@ LRESULT CTSScviko1Dlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 			return -1;  // Invalid image pointer
 		}
 
-		// Check if the file exists
 		if (!PathFileExists(pImage->filepath))
 		{
-			AfxMessageBox(_T("The specified file does not exist."));
-			return -1;  // File does not exist
+			AfxMessageBox(_T("The specified file does not exist.") + pImage->filename);
+			return -1; 
 		}
 
 		// Get the CStatic control by its ID (e.g., IDC_STATIC_IMAGE)
@@ -422,42 +412,31 @@ LRESULT CTSScviko1Dlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 		// Get the device context (DC) for the CStatic control
 		CDC* pDC = pImageCtrl->GetDC();
 		if (!pDC)
-			return -1;  // Failed to get DC
+			return -1;
 
-		// Get the handle to the DC (HDC)
-		HDC hDC = pDC->GetSafeHdc();
-
-		// Create a GDI+ Graphics object from the HDC
-		// Nizsie urovnovy
-		// CDC* pDC = CDC::FromHandle(st->hDC);
-
-		//Vyssie urovnovy
-		auto gr = Gdiplus::Graphics::FromHDC(st->hDC);
+		Gdiplus::Graphics gr(pDC->GetSafeHdc());
 
 		// Load the image from the file path using the Img structure
-		Gdiplus::Image image(pImage->filepath); // Use filepath from the Img structure
+		Gdiplus::Image image(pImage->filepath); 
 
-		// Check if the image loaded successfully
+
 		if (image.GetLastStatus() != Gdiplus::Ok)
 		{
+			pImageCtrl->ReleaseDC(pDC);
 			AfxMessageBox(_T("Failed to load the image."));
-			return -1;  // Loading image failed
+			return -1;
 		}
 
-		// Get the dimensions of the static control to scale the image if necessary
 		CRect rect;
 		pImageCtrl->GetClientRect(&rect);
 
-		// Draw the image into the static control (scale it to fit)
-		gr->DrawImage(&image, 0, 0, rect.Width(), rect.Height());
+		//(scale it to fit)!
+		gr.DrawImage(&image, 0, 0, rect.Width(), rect.Height());
 
-		// Clean up
-		delete gr;  // Free the GDI+ Graphics object
-		pImageCtrl->ReleaseDC(pDC);  // Release the DC
-
+		pImageCtrl->ReleaseDC(pDC);
 	}
+
 	return S_OK;
-	
 
 }
 
