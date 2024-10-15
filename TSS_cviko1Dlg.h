@@ -12,6 +12,7 @@ struct Img
 {
 	CString filename;
 	CString filepath;
+	Gdiplus::Image* bitmap;
 };
 
 // Draw classes for Itmes
@@ -78,10 +79,11 @@ public:
 	CStaticImage m_staticImage;
 
 	std::vector<Img> m_imageList;
-	Img* m_currentImage;
 
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 	ULONG_PTR gdiplusToken;
+
+	void DisplayListControl();
 
 	afx_msg void OnFileOpen32771();
 	afx_msg void OnFileClose32772();

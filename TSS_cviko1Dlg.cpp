@@ -194,7 +194,7 @@ void CTSScviko1Dlg::OnLvnItemchangedFileList(NMHDR* pNMHDR, LRESULT* pResult)
 	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
 
 
-	if (pNMLV->iItem != -1 && (pNMLV->uChanged & LVIF_STATE))
+	/*if (pNMLV->iItem != -1 && (pNMLV->uChanged & LVIF_STATE))
 	{
 		if ((pNMLV->uNewState & LVIS_SELECTED) == LVIS_SELECTED)
 		{
@@ -211,15 +211,39 @@ void CTSScviko1Dlg::OnLvnItemchangedFileList(NMHDR* pNMHDR, LRESULT* pResult)
 		{
 			SendMessage(WM_DRAW_IMAGE, 0, 0);
 		}
-	}
+	}*/
+
+	//this is allfor this function, this means when a selection in ListControl is selected it calles OnDrawImage
+
+	m_staticImage.Invalidate(FALSE);
 
 	*pResult = 0;
+}
+
+
+void CTSScviko1Dlg::DisplayListControl()
+{
+	m_fileList.DeleteAllItems();
+
+	for (size_t i = 0; i < m_imageList.size(); ++i)
+	{
+		m_fileList.InsertItem(i, m_imageList[i].filename);
+	}
+
+	if (m_imageList.size() > 0)
+	{
+		m_fileList.SetItemState(0, LVIS_SELECTED, LVIS_SELECTED);
+		
+		//m_staticImage.Invalidate(FALSE);
+		Invalidate(FALSE);
+	}
 }
 
 
 void CTSScviko1Dlg::OnFileOpen32771()
 {
 	// TODO: Add your command handler code here
+	// into struct of image add GDI+ Image* 
 
 	CString	filename;
 	CString filepath;
@@ -256,12 +280,11 @@ void CTSScviko1Dlg::OnFileOpen32771()
 			{
 				Img image; 
 				image.filename = filename;
-				image.filepath = filepath;
+				image.filepath = filepath; 
+				image.bitmap = Gdiplus::Image::FromFile(filepath);
 				m_imageList.push_back(image);
-				// Get the current number of items in the list
-				int itemCount = m_fileList.GetItemCount();
-				m_fileList.InsertItem(itemCount, filename);
-				int itemCount2 = m_fileList.GetItemCount();
+
+				DisplayListControl();
 			}
 
 		}
@@ -293,12 +316,6 @@ void CTSScviko1Dlg::OnFileClose32772()
 
 			bool imageFound = false;
 
-			// Loop through the vector to find and remove the image
-			auto it = std::remove_if(m_imageList.begin(), m_imageList.end(),
-				[&filenameToDelete](const Img& img) {
-					return img.filename.CompareNoCase(filenameToDelete) == 0;
-				});
-
 			for (size_t i = 0; i < m_imageList.size(); ++i)
 			{
 				if (m_imageList[i].filename.CompareNoCase(filenameToDelete) == 0)
@@ -308,17 +325,13 @@ void CTSScviko1Dlg::OnFileClose32772()
 				}
 			}
 
-			m_fileList.DeleteItem(selectedIndex);
-
-			if (imageFound)
-			{
-				AfxMessageBox(_T("The file has been successfully closed."));
-			}
+			DisplayListControl();
+			Invalidate(TRUE); 
 		}
 	}
 	else
 	{
-		// No item is selected, inform the user and do nothing
+		// No item is selected
 		AfxMessageBox(_T("No image selected to close."));
 	}
 }
@@ -328,8 +341,6 @@ void CTSScviko1Dlg::OnSize(UINT nType, int cx, int cy)
 {
 
 	CDialogEx::OnSize(nType, cx, cy);
-
-	// TODO: Add your message handler code here
 
 	int nDiffY = cy - m_rect.Height();
 	int nDiffX = cx - m_rect.Width();
@@ -346,80 +357,58 @@ void CTSScviko1Dlg::OnSize(UINT nType, int cx, int cy)
 	}
 
 	Invalidate(TRUE);
-	//potrebne
 
 }
 
 
 LRESULT CTSScviko1Dlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 {
+	LPDRAWITEMSTRUCT st = (LPDRAWITEMSTRUCT)wParam;
+	Gdiplus::Graphics gr(st->hDC);
+
 	if (m_imageList.empty())
 		return -1;
 
-	if (m_currentImage == nullptr || m_currentImage->filepath.IsEmpty())
-		return -1; 
+	int selectedIndex = m_fileList.GetNextItem(-1, LVNI_SELECTED);
 
-	if (!PathFileExists(m_currentImage->filepath))
+	if (selectedIndex == -1 || selectedIndex >= m_imageList.size())
+		return S_OK;
+
+	Gdiplus::Image* pImage = m_imageList[selectedIndex].bitmap;
+
+	if (pImage && pImage->GetLastStatus() == Gdiplus::Ok)
 	{
-		AfxMessageBox(_T("The specified file does not exist: ") + m_currentImage->filename);
-		return -1;  
+		CRect rect;
+		m_staticImage.GetClientRect(&rect);
+
+		float imageAspectRatio = static_cast<float>(pImage->GetWidth()) / static_cast<float>(pImage->GetHeight());
+		float controlAspectRatio = static_cast<float>(rect.Width()) / static_cast<float>(rect.Height());
+
+		float scaleFactor;
+		if (imageAspectRatio > controlAspectRatio)
+		{
+			scaleFactor = static_cast<float>(rect.Width()) / pImage->GetWidth();
+		}
+		else
+		{
+			scaleFactor = static_cast<float>(rect.Height()) / pImage->GetHeight();
+		}
+
+		int scaledWidth = static_cast<int>(pImage->GetWidth() * scaleFactor);
+		int scaledHeight = static_cast<int>(pImage->GetHeight() * scaleFactor);
+
+		int xPos = (rect.Width() - scaledWidth) / 2;   // Center horizontally
+		int yPos = (rect.Height() - scaledHeight) / 2; // Center vertically
+
+		gr.Clear(Gdiplus::Color::White);
+
+		gr.DrawImage(pImage, xPos, yPos, scaledWidth, scaledHeight);
 	}
-
-	// Get the CStatic control by its ID (e.g., IDC_STATIC_IMAGE)
-	CStatic* pImageCtrl = (CStatic*)GetDlgItem(IDC_STATIC_IMAGE);
-	if (!pImageCtrl)
-		return -1;  
-
-	CDC* pDC = pImageCtrl->GetDC();
-	if (!pDC)
-		return -1; 
-
-	Gdiplus::Graphics gr(pDC->GetSafeHdc());
-
-
-	Gdiplus::Image image(m_currentImage->filepath);
-
-	if (image.GetLastStatus() != Gdiplus::Ok)
-	{
-		pImageCtrl->ReleaseDC(pDC);
-		AfxMessageBox(_T("Failed to load the image.") + m_currentImage->filename);
-		return -1;
-	}
-
-	CRect rect;
-	pImageCtrl->GetClientRect(&rect);
-
-	Gdiplus::SolidBrush whiteBrush(Gdiplus::Color(255, 255, 255)); 
-	gr.FillRectangle(&whiteBrush, 0, 0, rect.Width(), rect.Height());
-
-	float imageAspectRatio = static_cast<float>(image.GetWidth()) / static_cast<float>(image.GetHeight());
-	float controlAspectRatio = static_cast<float>(rect.Width()) / static_cast<float>(rect.Height());
-
-	float scaleFactor;
-	if (imageAspectRatio > controlAspectRatio)
-	{
-		scaleFactor = static_cast<float>(rect.Width()) / image.GetWidth();
-	}
-	else
-	{
-		scaleFactor = static_cast<float>(rect.Height()) / image.GetHeight();
-	}
-
-	int scaledWidth = static_cast<int>(image.GetWidth() * scaleFactor);
-	int scaledHeight = static_cast<int>(image.GetHeight() * scaleFactor);
-
-	int xPos = (rect.Width() - scaledWidth) / 2;   // Center horizontally
-	int yPos = (rect.Height() - scaledHeight) / 2; // Center vertically
-
-	gr.DrawImage(&image, xPos, yPos, scaledWidth, scaledHeight);
-
-
-	pImageCtrl->ReleaseDC(pDC);
 
 	return S_OK;
 }
 
-
+//finish Histogram display, nova zlozka ako file, kde budu RGB items a podla toho sa vykresli RGB zlozky
 LRESULT CTSScviko1Dlg::OnDrawHist(WPARAM wParam, LPARAM lParam)
 {
 	LPDRAWITEMSTRUCT st = (LPDRAWITEMSTRUCT)wParam;
