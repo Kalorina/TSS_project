@@ -13,9 +13,12 @@ struct Img
 	CString filename;
 	CString filepath;
 	Gdiplus::Image* bitmap;
+
+	std::vector<UINT> redChannel; 
+	std::vector<UINT> greenChannel;
+	std::vector<UINT> blueChannel;
 };
 
-// Draw classes for Itmes
 // enum -> enumarate
 enum
 {
@@ -69,6 +72,7 @@ public:
 	afx_msg void OnLvnItemchangedFileList(NMHDR* pNMHDR, LRESULT* pResult);
 
 	CRect m_rect;
+	CMenu* m_menu;
 
 	CRect m_rectFileList;
 	CRect m_rectStaticHistogram;
@@ -80,10 +84,18 @@ public:
 
 	std::vector<Img> m_imageList;
 
+	bool m_RedChecked = FALSE;
+	bool m_GreenChecked = FALSE;
+	bool m_BlueChecked = FALSE;
+
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 	ULONG_PTR gdiplusToken;
 
+
+	//helpers
 	void DisplayListControl();
+	void CalculateHistogram(Img& img);
+
 
 	afx_msg void OnFileOpen32771();
 	afx_msg void OnFileClose32772();
@@ -91,7 +103,12 @@ public:
 	
 	//Messages
 	afx_msg LRESULT OnDrawImage(WPARAM wParam, LPARAM lParam);
-	BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg LRESULT OnDrawHist(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnStnClickedStaticImage();
+	afx_msg void OnHistogramRed();
+	afx_msg void OnHistogramGreen();
+	afx_msg void OnHistogramBlue();
+	afx_msg void OnUpdateHistogramRed(CCmdUI* pCmdUI);
 };
+
+
